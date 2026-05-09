@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospital AI</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#b30000">
+
+<style>
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f2f2f2;
+}
+
+.hidden{display:none;}
+
+.topbar{
+    background:#b30000;
+    color:white;
+    padding:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.topbar button{
+    background:white;
+    border:none;
+    padding:8px 12px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.menu{
+    background:#7a0000;
+    color:white;
+    padding:12px;
+}
+
+.menu p{
+    margin:12px 0;
+    cursor:pointer;
+}
+
+.section{
+    padding:15px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.card{
+    background:white;
+    padding:22px;
+    border-radius:12px;
+    text-align:center;
+    cursor:pointer;
+    box-shadow:0 2px 5px rgba(0,0,0,0.08);
+}
+
+input,button{
+    padding:12px;
+    margin:6px;
+    width:80%;
+    border-radius:8px;
+    border:1px solid #ccc;
+    box-sizing:border-box;
+}
+
+ul{
+    background:white;
+    padding:15px 25px;
+    border-radius:12px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="auth" style="text-align:center;margin-top:60px;">
+    <h2>🏥 Hospital AI</h2>
+
+    <input id="name" placeholder="Emër"><br>
+    <input id="phone" placeholder="Telefon"><br>
+
+    <button onclick="registerUser()">Vazhdo</button>
+</div>
+
+<div id="app" class="hidden">
+
+    <div class="topbar">
+        <button onclick="toggleMenu()">☰</button>
+        <h3>Hospital AI</h3>
+        <button onclick="SOS()">🚨 SOS</button>
+    </div>
+
+    <div id="menu" class="menu hidden">
+        <p onclick="showHome()">🏠 Home</p>
+        <p onclick="gps()">📍 GPS</p>
+        <p onclick="openMap()">🗺️ Maps</p>
+        <p onclick="logout()">🚪 Logout</p>
+    </div>
+
+    <div id="home" class="section">
+
+        <h3>🚑 Emergjencë</h3>
+        <div class="grid">
+            <div class="card" onclick="callNumber('112')">112</div>
+            <div class="card" onclick="callNumber('127')">Urgjenca</div>
+            <div class="card" onclick="callNumber('129')">Policia</div>
+            <div class="card" onclick="callNumber('128')">Zjarrfikëse</div>
+        </div>
+
+        <h3>📍 Vendndodhja</h3>
+        <div class="grid">
+            <div class="card" onclick="gps()">Aktivizo GPS</div>
+            <div class="card" onclick="openMap()">Hap Maps</div>
+        </div>
+
+        <h3>🏥 Shërbime afër</h3>
+        <div class="grid">
+            <div class="card" onclick="openSearch('hospital')">Spitale</div>
+            <div class="card" onclick="openSearch('pharmacy')">Farmaci</div>
+            <div class="card" onclick="openSearch('dentist')">Dentist</div>
+            <div class="card" onclick="openSearch('veterinary clinic')">Veterinar</div>
+        </div>
+
+        <h3>🤖 AI Mjekësor</h3>
+        <div style="background:white;padding:12px;border-radius:12px;">
+            <input id="msg" placeholder="Pyet AI..." style="width:70%;">
+            <button onclick="sendAI()" style="width:25%;">Pyet</button>
+            <div id="chat"></div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+let lat = "";
+let lon = "";
+
+window.onload = function(){
+    if(localStorage.getItem("hospitalUser")){
+        document.getElementById("auth").classList.add("hidden");
+        document.getElementById("app").classList.remove("hidden");
+    }
+    getGPS();
+};
+
+function registerUser(){
+    let name = document.getElementById("name").value;
+    let phone = document.getElementById("phone").value;
+
+    if(!name || !phone){
+        alert("Plotëso të dhënat");
+        return;
+    }
+
+    localStorage.setItem("hospitalUser", JSON.stringify({name, phone}));
+    document.getElementById("auth").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+}
+
+function toggleMenu(){
+    document.getElementById("menu").classList.toggle("hidden");
+}
+
+function logout(){
+    localStorage.removeItem("hospitalUser");
+    location.reload();
+}
+
+function callNumber(num){
+    window.location.href = "tel:" + num;
+}
+
+function getGPS(){
+    navigator.geolocation?.getCurrentPosition(pos=>{
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+    });
+}
+
+function gps(){
+    getGPS();
+    alert("GPS aktivizuar");
+}
+
+function openMap(){
+    window.open(`https://www.google.com/maps?q=${lat},${lon}`);
+}
+
+function openSearch(q){
+    window.open(`https://www.google.com/maps/search/${q}/@${lat},${lon},15z`);
+}
+
+function SOS(){
+    let user = JSON.parse(localStorage.getItem("hospitalUser"));
+    let msg = "SOS " + user.name + " " + user.phone + " https://maps.google.com/?q=" + lat + "," + lon;
+    window.open("sms:?body=" + encodeURIComponent(msg));
+}
+
+function sendAI(){
+    let input = document.getElementById("msg");
+    let chat = document.getElementById("chat");
+    chat.innerHTML += "<p><b>Ti:</b> "+input.value+"</p>";
+    chat.innerHTML += "<p><b>AI:</b> Thirr 112 në raste emergjence.</p>";
+    input.value="";
+}
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+
+</body>
+</html>
